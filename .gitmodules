@@ -1,0 +1,3 @@
+[submodule "assets/frontend"]
+	path = assets/frontend
+	url = https://github.com/kzw200015/golist-frontend.git
