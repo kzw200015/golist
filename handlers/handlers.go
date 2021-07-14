@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
@@ -11,19 +13,33 @@ import (
 	"github.com/kzw200015/go-list/types"
 )
 
-func ListPath(c *gin.Context) {
-	destPath := c.Query("path")
-	if destPath == "" {
-		destPath = "/"
+func ListPath() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := filepath.Clean(c.DefaultQuery("path", "/"))
+
+		err := checkPath(path)
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		pathInfo, err := getInfo(path)
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		c.JSON(200, pathInfo)
 	}
 
-	pathInfo, err := getInfo(destPath)
-	if err != nil {
-		c.Error(err).SetType(gin.ErrorTypePublic)
-		return
-	}
+}
 
-	c.JSON(200, pathInfo)
+func Down(router *gin.Engine) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := filepath.Clean(c.Query("path"))
+		c.Request.URL.Path = filepath.ToSlash(filepath.Join("/file", path))
+		router.HandleContext(c)
+	}
 }
 
 func getInfo(path string) (types.PathInfo, error) {
@@ -68,4 +84,22 @@ func getInfo(path string) (types.PathInfo, error) {
 func formatPath(path ...string) string {
 	path = append([]string{"/"}, path...)
 	return filepath.ToSlash(filepath.Join(path...))
+}
+
+func checkPath(path string) error {
+	p1, err := filepath.Abs(filepath.Join(args.GetSrcPath(), path))
+	if err != nil {
+		return err
+	}
+
+	p2, err := filepath.Abs(args.GetSrcPath())
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(p1, p2) {
+		return errors.New("path no permission")
+	}
+
+	return nil
 }

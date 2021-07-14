@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,8 @@ func HandleStatics() gin.HandlerFunc {
 
 		if strings.HasPrefix(path, "/file/") {
 			fileServer := http.StripPrefix("/file/", http.FileServer(http.Dir(args.GetSrcPath())))
-			c.Header("Content-Disposition", "attachment")
+			_, filename := filepath.Split(path)
+			c.Header("Content-Disposition", "attachment; filename="+filename)
 			fileServer.ServeHTTP(c.Writer, c.Request)
 			c.Abort()
 			return

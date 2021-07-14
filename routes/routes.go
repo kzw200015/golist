@@ -7,13 +7,18 @@ import (
 	"github.com/kzw200015/go-list/middlewares"
 )
 
-func CreateRouter() *gin.Engine {
-	r := gin.Default()
-	r.Use(middlewares.HandleErrors()).Use(cors.Default()).Use(middlewares.HandleStatics())
-	api := r.Group("/api")
-	{
-		api.GET("/list", handlers.ListPath)
-	}
+var router *gin.Engine
 
-	return r
+func GetRouter() *gin.Engine {
+	return router
+}
+
+func init() {
+	router = gin.Default()
+	router.Use(middlewares.HandleErrors(), cors.Default(), middlewares.HandleStatics())
+	api := router.Group("/api")
+	{
+		api.GET("/list", handlers.ListPath())
+		api.GET("/down", handlers.Down(router))
+	}
 }

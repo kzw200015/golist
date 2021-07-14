@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	r := routes.CreateRouter()
+	r := routes.GetRouter()
 
 	r.Run(":" + strconv.Itoa(args.GetPort()))
 }
